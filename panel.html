@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<meta name="color-scheme" content="dark">
+<title>Dvaes Digital — Album Investment Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---------- Design tokens (prilagodi ovdje da se točno poklopi sa styles.css s dvaes.digital) ---------- */
+:root{
+  --bg:#080808;
+  --surface:rgba(255,255,255,.035);
+  --surface-2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.11);
+  --line-strong:rgba(255,255,255,.28);
+  --text:#f2f0eb;
+  --muted:#8d8b85;
+  --accent:#f2f0eb;          /* primarna boja gumba / naglasaka */
+  --accent-ink:#080808;
+  --ok:#7bd9a8;
+  --bad:#ff7a85;
+  --radius:16px;
+  --font:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.6 var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.07;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.container{width:100%;max-width:1240px;margin:0 auto;padding:0 clamp(18px,4vw,48px)}
+
+/* ---------- Header ---------- */
+.site-header{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:16px clamp(18px,4vw,48px);background:rgba(8,8,8,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:baseline;gap:8px;text-decoration:none;font-weight:800;letter-spacing:-.02em;font-size:19px}
+.logo small{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.site-nav{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.site-nav a{display:block;padding:8px 14px;border-radius:99px;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;transition:color .2s,background .2s}
+.site-nav a:hover{color:var(--text)}
+.site-nav a[aria-current="true"]{color:var(--text);background:var(--surface-2)}
+.nav-toggle{display:none;width:42px;height:42px;border:1px solid var(--line);border-radius:12px;background:transparent;padding:0;flex-direction:column;gap:5px;align-items:center;justify-content:center}
+.nav-toggle__bar{display:block;width:18px;height:2px;background:var(--text);border-radius:2px;transition:transform .2s,opacity .2s}
+.site-header.is-open .nav-toggle__bar:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.site-header.is-open .nav-toggle__bar:nth-child(2){opacity:0}
+.site-header.is-open .nav-toggle__bar:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ---------- Hero ---------- */
+.hero{padding-top:clamp(56px,9vw,120px);padding-bottom:clamp(36px,5vw,64px)}
+.hero-eyebrow{margin:0 0 18px;color:var(--muted);font-weight:600;font-size:13px;letter-spacing:.04em}
+.hero-title{margin:0;font-size:clamp(40px,7.4vw,96px);line-height:1;letter-spacing:-.045em;font-weight:800;max-width:14ch}
+.hero-tagline{margin:22px 0 0;color:var(--muted);font-size:clamp(16px,1.8vw,20px);max-width:46ch}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px}
+
+.btn{border:1px solid var(--line-strong);border-radius:99px;padding:12px 22px;background:transparent;color:var(--text);font-weight:600;font-size:14px;transition:background .2s,border-color .2s,color .2s}
+.btn:hover{background:var(--surface-2);border-color:var(--text)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:#fff;border-color:#fff}
+
+/* ---------- Sections ---------- */
+.section{padding-top:clamp(28px,4vw,48px)}
+.section-label{margin:0 0 8px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.section-title{margin:0;font-size:clamp(24px,3vw,34px);letter-spacing:-.035em;line-height:1.1;font-weight:800}
+.section-desc{margin:8px 0 0;color:var(--muted);max-width:52ch}
+.pillar{display:inline-block;border:1px solid var(--line-strong);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:600;white-space:nowrap}
+.pillar.live{border-color:var(--text)}
+
+/* ---------- Project bar ---------- */
+.projectbar{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,.8fr) minmax(0,1fr) auto;gap:14px;align-items:end;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field label{font-size:12px;color:var(--muted);font-weight:600}
+.field input,.field select{width:100%;min-width:0;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:12px;padding:11px 13px;outline:none;color-scheme:dark;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--text)}
+.field select option{background:#111}
+
+/* ---------- Metrics ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.metric{padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.metric-label{color:var(--muted);font-size:13px;font-weight:600}
+.metric-value{font-size:clamp(24px,2.7vw,34px);font-weight:800;letter-spacing:-.04em;margin:10px 0 4px;line-height:1.1}
+.metric-foot{color:var(--muted);font-size:12px}
+
+/* ---------- Layout / cards ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:12px;align-items:start;margin-top:12px}
+.stack{display:grid;gap:12px}
+.card{padding:clamp(18px,2.4vw,28px);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:24px}
+
+.budget-list{display:grid;gap:20px}
+.budget-row{display:grid;grid-template-columns:minmax(0,1fr) 118px 22px;gap:12px;align-items:center}
+.budget-name{font-weight:700;font-size:14px}
+.budget-note{color:var(--muted);font-size:12px;margin-top:1px}
+.money-input{width:100%;min-width:0;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:right;outline:none;color-scheme:dark;transition:border-color .2s}
+.money-input:focus{border-color:var(--text)}
+.budget-row>span{color:var(--muted)}
+.budget-bar{grid-column:1/-1;height:3px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:-6px}
+.budget-bar span{display:block;height:100%;background:var(--text);border-radius:99px;transition:width .25s}
+.sumline{border-top:1px solid var(--line);margin-top:24px;padding-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sumline small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+.sumline strong{font-size:26px;letter-spacing:-.03em}
+.muted-sm{color:var(--muted);font-size:12px}
+
+.phase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.phase{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(0,0,0,.3)}
+.phase-tag{font-size:12px;color:var(--muted);font-weight:700}
+.phase h3{font-size:15px;margin:6px 0 4px;letter-spacing:-.02em}
+.phase p{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.phase input{width:100%;background:rgba(0,0,0,.45);border:1px solid var(--line);padding:10px;border-radius:10px;outline:none;color-scheme:dark}
+.phase input:focus{border-color:var(--text)}
+.phase-total{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-top:18px}
+.phase-total strong{color:var(--text);font-size:19px}
+
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.range-wrap{margin:22px 0 16px}
+.range-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.range-head strong{color:var(--text);font-size:15px}
+input[type=range]{width:100%;accent-color:#f2f0eb}
+.result-box{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(0,0,0,.3)}
+.result-box .label{font-size:12px;color:var(--muted);font-weight:600}
+.result-box .number{font-size:30px;font-weight:800;letter-spacing:-.04em;margin-top:4px}
+.result-box .tiny{font-size:12px;color:var(--muted);margin-top:2px}
+.progress{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:14px 0 8px}
+.progress span{display:block;height:100%;background:var(--ok);width:0;transition:width .25s}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.split>div{border:1px solid var(--line);padding:14px;border-radius:14px;background:rgba(0,0,0,.3)}
+.split span{font-size:12px;color:var(--muted)}
+.split strong{font-size:20px;display:block;margin-top:4px;letter-spacing:-.03em}
+.note{color:var(--muted);font-size:12px;line-height:1.65;margin:16px 0 0}
+
+.model-steps{display:grid;gap:0;margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.model-steps li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.model-steps .n{color:var(--muted);font-weight:700;font-size:13px;padding-top:1px}
+.model-steps h3{font-size:14px;margin:0 0 3px;letter-spacing:-.01em}
+.model-steps p{margin:0;font-size:12px;color:var(--muted);line-height:1.6}
+.split-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+
+/* ---------- Footer / language / toast ---------- */
+.site-footer{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-top:clamp(48px,7vw,96px);padding:26px clamp(18px,4vw,48px) 90px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.lang-switch{position:fixed;left:18px;bottom:18px;z-index:60;display:flex;padding:4px;border:1px solid var(--line-strong);border-radius:99px;background:rgba(8,8,8,.88);backdrop-filter:blur(10px)}
+.lang-switch__btn{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:99px;font-weight:700;font-size:12px;letter-spacing:.06em;transition:background .2s,color .2s}
+.lang-switch__btn.is-active{background:var(--accent);color:var(--accent-ink)}
+.toast{position:fixed;bottom:18px;right:18px;z-index:60;background:var(--text);color:var(--bg);font-weight:600;padding:12px 18px;border-radius:99px;opacity:0;transform:translateY(8px);pointer-events:none;transition:.25s}
+.toast.show{opacity:1;transform:none}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1000px){
+  .layout{grid-template-columns:1fr}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .projectbar{grid-template-columns:1fr 1fr}
+  .projectbar .status{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .nav-toggle{display:flex}
+  #site-nav{position:absolute;left:0;right:0;top:100%;background:rgba(8,8,8,.97);border-bottom:1px solid var(--line);padding:10px clamp(18px,4vw,48px) 18px;display:none}
+  .site-header.is-open #site-nav{display:block}
+  .site-nav{flex-direction:column}
+  .site-nav a{padding:12px 4px;border-radius:0}
+  .site-nav a[aria-current="true"]{background:none}
+  .phase-grid{grid-template-columns:1fr}
+  .budget-row{grid-template-columns:minmax(0,1fr) 100px 18px;gap:8px}
+  .hero-actions .btn{flex:1;text-align:center}
+}
+@media(max-width:480px){
+  .metrics{gap:9px}.metric{padding:15px}
+  .projectbar{grid-template-columns:1fr}
+  .sim-grid,.split-inputs{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{
+  body::before,.site-header,.hero-actions,.lang-switch,.toast{display:none!important}
+  body,.card,.metric,.projectbar,.phase,.result-box,.split>div{background:#fff!important;color:#111!important;border-color:#ccc!important}
+  .muted-sm,.note,.section-desc,.section-label,.metric-label,.metric-foot,.budget-note,.hero-tagline,.hero-eyebrow,.site-footer{color:#555!important}
+  input,select{background:#fff!important;color:#111!important;border-color:#ccc!important}
+  .hero{padding:10px 0}.hero-title{font-size:30px}
+  .layout{grid-template-columns:1fr 1fr}.card,.metric{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader">
+  <a href="#overview" class="logo">Dvaes Digital <small data-i18n="logo.sub">Label Desk</small></a>
+  <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="site-nav" aria-label="Menu" data-i18n-aria="nav.menu">
+    <span class="nav-toggle__bar"></span><span class="nav-toggle__bar"></span><span class="nav-toggle__bar"></span>
+  </button>
+  <nav id="site-nav" aria-label="Main">
+    <ul class="site-nav">
+      <li><a href="#overview" data-i18n="nav.overview">Pregled</a></li>
+      <li><a href="#budget" data-i18n="nav.budget">Budžet</a></li>
+      <li><a href="#phases" data-i18n="nav.phases">Faze</a></li>
+      <li><a href="#simulation" data-i18n="nav.simulation">Povrat</a></li>
+      <li><a href="#model" data-i18n="nav.model">Podjela</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="hero container" id="overview">
+    <p class="hero-eyebrow" data-i18n="hero.eyebrow">Label · Albumi · Financije</p>
+    <h1 class="hero-title" data-i18n="hero.title">Kalkulator ulaganja.</h1>
+    <p class="hero-tagline" data-i18n="hero.tagline">Planiraj budžet albuma i prati mogući povrat za label.</p>
+    <div class="hero-actions">
+      <button class="btn primary" id="saveBtn" data-i18n="btn.save">Spremi projekt</button>
+      <button class="btn" id="exportBtn" data-i18n="btn.export">Izvezi CSV</button>
+      <button class="btn" id="printBtn" data-i18n="btn.print">Ispis / PDF</button>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="projectbar" aria-label="Project">
+      <div class="field"><label for="artist" data-i18n="proj.artist">Izvođač / projekt</label><input id="artist" value="Novi album — Demo izvođač" maxlength="100"></div>
+      <div class="field"><label for="trackCount" data-i18n="proj.tracks">Broj pjesama</label><input id="trackCount" type="number" min="1" max="50" value="14"></div>
+      <div class="field"><label for="releaseDate" data-i18n="proj.release">Planirani izlazak</label><input id="releaseDate" type="date" value="2027-03-01"></div>
+      <div class="status"><span class="pillar live" data-i18n="proj.status">Radna verzija</span></div>
+    </section>
+
+    <section class="metrics">
+      <div class="metric"><div class="metric-label" data-i18n="m.invest">Ukupno ulaganje</div><div class="metric-value" id="mBudget">3.000 €</div><div class="metric-foot" data-i18n="m.invest.foot">Planirani troškovi projekta</div></div>
+      <div class="metric"><div class="metric-label" data-i18n="m.revenue">Procijenjeni prihod</div><div class="metric-value" id="mRevenue">1.500 €</div><div class="metric-foot" data-i18n="m.revenue.foot">Prije dodatnih odbitaka</div></div>
+      <div class="metric"><div class="metric-label" data-i18n="m.roi">Povrat ulaganja</div><div class="metric-value" id="mRoi">50,0%</div><div class="metric-foot" data-i18n="m.roi.foot">U odnosu na budžet</div></div>
+      <div class="metric"><div class="metric-label" data-i18n="m.remaining">Preostalo za povrat</div><div class="metric-value" id="mRemaining">1.500 €</div><div class="metric-foot" data-i18n="m.remaining.foot">Do pokrića planiranog ulaganja</div></div>
+    </section>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="card section" id="budget" style="padding-top:clamp(18px,2.4vw,28px)">
+          <div class="card-head">
+            <div><p class="section-label" data-i18n="budget.label">Budžet</p><h2 class="section-title" data-i18n="budget.title">Budžet projekta</h2><p class="section-desc" data-i18n="budget.desc">Uredi iznose po kategorijama — ukupni izračun se ažurira automatski.</p></div>
+            <span class="pillar" data-i18n="budget.pill">5 kategorija</span>
+          </div>
+          <div class="budget-list" id="budgetList">
+            <div class="budget-row"><div><div class="budget-name" data-i18n="b1.name">Produkcija i beatovi</div><div class="budget-note" data-i18n="b1.note">Instrumentali, studio i vokalna produkcija</div></div><input class="money-input budget-input" type="number" min="0" step="25" value="900" data-i18n-aria="b1.name" aria-label="Produkcija i beatovi"><span>€</span><div class="budget-bar"><span style="width:30%"></span></div></div>
+            <div class="budget-row"><div><div class="budget-name" data-i18n="b2.name">Miks i mastering</div><div class="budget-note" data-i18n="b2.note">Finalizacija svih pjesama</div></div><input class="money-input budget-input" type="number" min="0" step="25" value="450" data-i18n-aria="b2.name" aria-label="Miks i mastering"><span>€</span><div class="budget-bar"><span style="width:15%"></span></div></div>
+            <div class="budget-row"><div><div class="budget-name" data-i18n="b3.name">Spotovi i vizuali</div><div class="budget-note" data-i18n="b3.note">Glavni spot, kratki videi i vizuali</div></div><input class="money-input budget-input" type="number" min="0" step="25" value="650" data-i18n-aria="b3.name" aria-label="Spotovi i vizuali"><span>€</span><div class="budget-bar"><span style="width:22%"></span></div></div>
+            <div class="budget-row"><div><div class="budget-name" data-i18n="b4.name">Marketing i promocija</div><div class="budget-note" data-i18n="b4.note">Oglasi, sadržaj i PR</div></div><input class="money-input budget-input" type="number" min="0" step="25" value="650" data-i18n-aria="b4.name" aria-label="Marketing i promocija"><span>€</span><div class="budget-bar"><span style="width:22%"></span></div></div>
+            <div class="budget-row"><div><div class="budget-name" data-i18n="b5.name">Cover, distribucija i rezerva</div><div class="budget-note" data-i18n="b5.note">Naslovnica, administracija i neplanirani troškovi</div></div><input class="money-input budget-input" type="number" min="0" step="25" value="350" data-i18n-aria="b5.name" aria-label="Cover distribucija i rezerva"><span>€</span><div class="budget-bar"><span style="width:12%"></span></div></div>
+          </div>
+          <div class="sumline"><div><small data-i18n="budget.total">Ukupni budžet</small><span class="muted-sm" id="perTrack">214,29 € po pjesmi</span></div><strong id="budgetTotal">3.000 €</strong></div>
+        </section>
+
+        <section class="card section" id="phases" style="padding-top:clamp(18px,2.4vw,28px)">
+          <div class="card-head"><div><p class="section-label" data-i18n="phases.label">Raspored</p><h2 class="section-title" data-i18n="phases.title">Faze ulaganja</h2><p class="section-desc" data-i18n="phases.desc">Rasporedi budžet po fazama realizacije albuma.</p></div></div>
+          <div class="phase-grid">
+            <div class="phase"><div class="phase-tag" data-i18n="ph1.tag">Faza 1</div><h3 data-i18n="ph1.name">Priprema</h3><p data-i18n="ph1.desc">Demo, odabir pjesama i početna produkcija.</p><input type="number" min="0" step="50" value="900" class="phase-input" data-i18n-aria="ph1.aria" aria-label="Budžet faze priprema"></div>
+            <div class="phase"><div class="phase-tag" data-i18n="ph2.tag">Faza 2</div><h3 data-i18n="ph2.name">Prvi singlovi</h3><p data-i18n="ph2.desc">Snimanje, prvi spot i test promocije.</p><input type="number" min="0" step="50" value="900" class="phase-input" data-i18n-aria="ph2.aria" aria-label="Budžet faze singlovi"></div>
+            <div class="phase"><div class="phase-tag" data-i18n="ph3.tag">Faza 3</div><h3 data-i18n="ph3.name">Album i kampanja</h3><p data-i18n="ph3.desc">Završetak pjesama i izlazna kampanja.</p><input type="number" min="0" step="50" value="1200" class="phase-input" data-i18n-aria="ph3.aria" aria-label="Budžet faze album"></div>
+          </div>
+          <div class="phase-total"><span><span data-i18n="phases.sum">Zbroj faza</span> <span id="phaseStatus"></span></span><strong id="phaseTotal">3.000 €</strong></div>
+          <p class="note" data-i18n="phases.note">Faze su plan isplate, a ne dodatni trošak. Usporedi ih s ukupnim budžetom kako bi vidio je li raspored ulaganja usklađen.</p>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card section" id="simulation" style="padding-top:clamp(18px,2.4vw,28px)">
+          <div class="card-head"><div><p class="section-label" data-i18n="sim.label">Simulacija</p><h2 class="section-title" data-i18n="sim.title">Simulacija povrata</h2><p class="section-desc" data-i18n="sim.desc">Procijeni prihod od streamova i drugih izvora.</p></div></div>
+          <div class="sim-grid">
+            <div class="field"><label for="rate" data-i18n="sim.rate">Prihod po streamu (€)</label>
+              <select id="rate">
+                <option value="0.001" data-i18n="rate.1">0,001 € · niža procjena</option>
+                <option value="0.002" data-i18n="rate.2">0,002 €</option>
+                <option value="0.003" data-i18n="rate.3" selected>0,003 € · primjer</option>
+                <option value="0.004" data-i18n="rate.4">0,004 € · viša procjena</option>
+                <option value="0.005" data-i18n="rate.5">0,005 €</option>
+              </select></div>
+            <div class="field"><label for="otherRevenue" data-i18n="sim.other">Drugi neto prihodi (€)</label><input id="otherRevenue" type="number" min="0" step="50" value="0"></div>
+          </div>
+          <div class="range-wrap"><div class="range-head"><span data-i18n="sim.streams">Ukupno streamova</span><strong id="streamsLabel">500.000</strong></div><input id="streams" type="range" min="0" max="5000000" step="50000" value="500000"><div class="range-head"><span>0</span><span id="streamsMax">5.000.000</span></div></div>
+          <div class="result-box"><div class="label" data-i18n="sim.total">Procijenjeni ukupni prihod</div><div class="number" id="simRevenue">1.500 €</div><div class="tiny" id="simDetail"></div><div class="progress"><span id="recoveryBar" style="width:50%"></span></div><div class="range-head" style="margin:0"><span data-i18n="sim.cover">Pokriće ulaganja</span><strong id="recoveryLabel">50,0%</strong></div></div>
+          <div class="split"><div><span data-i18n="sim.remaining">Preostalo za povrat</span><strong id="simRemaining">1.500 €</strong></div><div><span data-i18n="sim.breakeven">Streamovi za pokriće*</span><strong id="breakEven">1.000.000</strong></div></div>
+          <p class="note" data-i18n="sim.note">*Približan broj streamova potreban za pokriće budžeta ako nema drugih prihoda i ako se ostvari odabrani prihod po streamu. Stvarna isplata varira prema platformi, teritoriju, vrsti streama, distributeru i pravima.</p>
+        </section>
+
+        <section class="card section" id="model" style="padding-top:clamp(18px,2.4vw,28px)">
+          <div class="card-head"><div><p class="section-label" data-i18n="model.label">Podjela</p><h2 class="section-title" data-i18n="model.title">Model povrata ulaganja</h2><p class="section-desc" data-i18n="model.desc">Prilagodi podjelu neto prihoda nakon povrata.</p></div></div>
+          <ol class="model-steps">
+            <li><span class="n">1</span><div><h3 data-i18n="ms1.h">Povrat labelu</h3><p data-i18n="ms1.p">Ugovoreni prihvatljivi troškovi vraćaju se iz definiranih prihoda projekta.</p></div></li>
+            <li><span class="n">2</span><div><h3 data-i18n="ms2.h">Podjela prihoda</h3><p data-i18n="ms2.p">Nakon povrata, preostali neto prihod dijeli se prema ugovorenim udjelima.</p></div></li>
+            <li><span class="n">3</span><div><h3 data-i18n="ms3.h">Transparentni obračun</h3><p data-i18n="ms3.p">Dogovoriti izvještaje, rokove isplata i koje se stavke smiju odbiti.</p></div></li>
+          </ol>
+          <div class="split-inputs">
+            <div class="field"><label for="labelShare" data-i18n="model.labelShare">Udio labela nakon povrata (%)</label><input id="labelShare" type="number" min="0" max="100" value="50"></div>
+            <div class="field"><label for="artistShare" data-i18n="model.artistShare">Udio izvođača nakon povrata (%)</label><input id="artistShare" type="number" min="0" max="100" value="50"></div>
+          </div>
+          <div class="split"><div><span data-i18n="model.labelAmt">Label — udio od preostalog prihoda</span><strong id="labelAmount">0 €</strong></div><div><span data-i18n="model.artistAmt">Izvođač — udio od preostalog prihoda</span><strong id="artistAmount">0 €</strong></div></div>
+          <p class="note" id="shareWarning"></p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <a href="#overview" class="logo">Dvaes Digital</a>
+  <span id="footerNote">Podaci se spremaju lokalno u ovom pregledniku.</span>
+</footer>
+
+<div class="lang-switch" role="group" aria-label="Jezik / Language">
+  <button type="button" class="lang-switch__btn" data-lang="hr" lang="hr" title="Hrvatski" aria-pressed="false">HR</button>
+  <button type="button" class="lang-switch__btn" data-lang="en" lang="en" title="English" aria-pressed="false">EN</button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+ /* ================= i18n ================= */
+ const T = {
+  hr:{
+   'logo.sub':'Label Desk','nav.menu':'Izbornik','nav.overview':'Pregled','nav.budget':'Budžet','nav.phases':'Faze','nav.simulation':'Povrat','nav.model':'Podjela',
+   'hero.eyebrow':'Label · Albumi · Financije','hero.title':'Kalkulator ulaganja.','hero.tagline':'Planiraj budžet albuma i prati mogući povrat za label.',
+   'btn.save':'Spremi projekt','btn.export':'Izvezi CSV','btn.print':'Ispis / PDF',
+   'proj.artist':'Izvođač / projekt','proj.tracks':'Broj pjesama','proj.release':'Planirani izlazak','proj.status':'Radna verzija',
+   'artist.default':'Novi album — Demo izvođač',
+   'm.invest':'Ukupno ulaganje','m.invest.foot':'Planirani troškovi projekta','m.revenue':'Procijenjeni prihod','m.revenue.foot':'Prije dodatnih odbitaka','m.roi':'Povrat ulaganja','m.roi.foot':'U odnosu na budžet','m.remaining':'Preostalo za povrat','m.remaining.foot':'Do pokrića planiranog ulaganja',
+   'budget.label':'Budžet','budget.title':'Budžet projekta','budget.desc':'Uredi iznose po kategorijama — ukupni izračun se ažurira automatski.','budget.pill':'5 kategorija','budget.total':'Ukupni budžet',
+   'b1.name':'Produkcija i beatovi','b1.note':'Instrumentali, studio i vokalna produkcija',
+   'b2.name':'Miks i mastering','b2.note':'Finalizacija svih pjesama',
+   'b3.name':'Spotovi i vizuali','b3.note':'Glavni spot, kratki videi i vizuali',
+   'b4.name':'Marketing i promocija','b4.note':'Oglasi, sadržaj i PR',
+   'b5.name':'Cover, distribucija i rezerva','b5.note':'Naslovnica, administracija i neplanirani troškovi',
+   'phases.label':'Raspored','phases.title':'Faze ulaganja','phases.desc':'Rasporedi budžet po fazama realizacije albuma.','phases.sum':'Zbroj faza','phases.note':'Faze su plan isplate, a ne dodatni trošak. Usporedi ih s ukupnim budžetom kako bi vidio je li raspored ulaganja usklađen.',
+   'ph1.tag':'Faza 1','ph1.name':'Priprema','ph1.desc':'Demo, odabir pjesama i početna produkcija.','ph1.aria':'Budžet faze priprema',
+   'ph2.tag':'Faza 2','ph2.name':'Prvi singlovi','ph2.desc':'Snimanje, prvi spot i test promocije.','ph2.aria':'Budžet faze singlovi',
+   'ph3.tag':'Faza 3','ph3.name':'Album i kampanja','ph3.desc':'Završetak pjesama i izlazna kampanja.','ph3.aria':'Budžet faze album',
+   'phase.ok':'· usklađeno','phase.diff':'· razlika {d}',
+   'sim.label':'Simulacija','sim.title':'Simulacija povrata','sim.desc':'Procijeni prihod od streamova i drugih izvora.','sim.rate':'Prihod po streamu (€)','sim.other':'Drugi neto prihodi (€)','sim.streams':'Ukupno streamova','sim.total':'Procijenjeni ukupni prihod','sim.cover':'Pokriće ulaganja','sim.remaining':'Preostalo za povrat','sim.breakeven':'Streamovi za pokriće*',
+   'sim.note':'*Približan broj streamova potreban za pokriće budžeta ako nema drugih prihoda i ako se ostvari odabrani prihod po streamu. Stvarna isplata varira prema platformi, teritoriju, vrsti streama, distributeru i pravima.',
+   'sim.detail':'{s} streamova × {r} € + {o} drugih prihoda',
+   'rate.1':'0,001 € · niža procjena','rate.2':'0,002 €','rate.3':'0,003 € · primjer','rate.4':'0,004 € · viša procjena','rate.5':'0,005 €',
+   'model.label':'Podjela','model.title':'Model povrata ulaganja','model.desc':'Prilagodi podjelu neto prihoda nakon povrata.',
+   'ms1.h':'Povrat labelu','ms1.p':'Ugovoreni prihvatljivi troškovi vraćaju se iz definiranih prihoda projekta.',
+   'ms2.h':'Podjela prihoda','ms2.p':'Nakon povrata, preostali neto prihod dijeli se prema ugovorenim udjelima.',
+   'ms3.h':'Transparentni obračun','ms3.p':'Dogovoriti izvještaje, rokove isplata i koje se stavke smiju odbiti.',
+   'model.labelShare':'Udio labela nakon povrata (%)','model.artistShare':'Udio izvođača nakon povrata (%)','model.labelAmt':'Label — udio od preostalog prihoda','model.artistAmt':'Izvođač — udio od preostalog prihoda',
+   'share.ok':'Udjeli su usklađeni na 100%. ','share.warn':'Upozorenje: udjeli trenutno iznose {n}%, a trebaju iznositi 100%. ',
+   'share.note':'Iznosi udjela prikazani su tek na prihodu iznad planiranog ulaganja i prije drugih ugovorenih odbitaka. Ovaj kalkulator je planerski alat, ne zamjena za ugovor ili računovodstveni savjet.',
+   'per.track':'{v} po pjesmi','footer':'Podaci se spremaju lokalno u ovom pregledniku.','toast.saved':'Projekt je spremljen u ovom pregledniku.',
+   'alert.save':'Preglednik nije dopustio spremanje. Izvezi CSV kao sigurnosnu kopiju.',
+   'csv.title':'Dvaes Digital — Kalkulator ulaganja','csv.project':'Projekt','csv.tracks':'Broj pjesama','csv.release':'Planirani izlazak','csv.cat':'Kategorija','csv.amount':'Iznos EUR','csv.total':'Ukupni budžet','csv.streams':'Streamovi','csv.rate':'Pretpostavljeni prihod po streamu','csv.other':'Drugi prihodi EUR','csv.revenue':'Procijenjeni prihod EUR','csv.labelShare':'Udio labela %','csv.artistShare':'Udio izvođača %','csv.phase':'Faza'
+  },
+  en:{
+   'logo.sub':'Label Desk','nav.menu':'Menu','nav.overview':'Overview','nav.budget':'Budget','nav.phases':'Phases','nav.simulation':'Return','nav.model':'Split',
+   'hero.eyebrow':'Label · Albums · Finance','hero.title':'Investment calculator.','hero.tagline':'Plan the album budget and track the label’s potential return.',
+   'btn.save':'Save project','btn.export':'Export CSV','btn.print':'Print / PDF',
+   'proj.artist':'Artist / project','proj.tracks':'Number of tracks','proj.release':'Planned release','proj.status':'Working draft',
+   'artist.default':'New album — Demo artist',
+   'm.invest':'Total investment','m.invest.foot':'Planned project costs','m.revenue':'Estimated revenue','m.revenue.foot':'Before additional deductions','m.roi':'Return on investment','m.roi.foot':'Relative to budget','m.remaining':'Left to recoup','m.remaining.foot':'Until the planned investment is covered',
+   'budget.label':'Budget','budget.title':'Project budget','budget.desc':'Edit amounts per category — the total updates automatically.','budget.pill':'5 categories','budget.total':'Total budget',
+   'b1.name':'Production and beats','b1.note':'Instrumentals, studio and vocal production',
+   'b2.name':'Mixing and mastering','b2.note':'Finalizing all tracks',
+   'b3.name':'Videos and visuals','b3.note':'Main video, short clips and visuals',
+   'b4.name':'Marketing and promotion','b4.note':'Ads, content and PR',
+   'b5.name':'Cover, distribution and reserve','b5.note':'Artwork, administration and unplanned costs',
+   'phases.label':'Schedule','phases.title':'Investment phases','phases.desc':'Split the budget across the album’s production phases.','phases.sum':'Phase total','phases.note':'Phases are a payment schedule, not an extra cost. Compare them with the total budget to check that the schedule adds up.',
+   'ph1.tag':'Phase 1','ph1.name':'Preparation','ph1.desc':'Demos, track selection and early production.','ph1.aria':'Preparation phase budget',
+   'ph2.tag':'Phase 2','ph2.name':'First singles','ph2.desc':'Recording, first video and promo test.','ph2.aria':'First singles phase budget',
+   'ph3.tag':'Phase 3','ph3.name':'Album and campaign','ph3.desc':'Finishing the tracks and the release campaign.','ph3.aria':'Album phase budget',
+   'phase.ok':'· matched','phase.diff':'· difference {d}',
+   'sim.label':'Simulation','sim.title':'Return simulation','sim.desc':'Estimate revenue from streams and other sources.','sim.rate':'Revenue per stream (€)','sim.other':'Other net revenue (€)','sim.streams':'Total streams','sim.total':'Estimated total revenue','sim.cover':'Investment recouped','sim.remaining':'Left to recoup','sim.breakeven':'Streams to break even*',
+   'sim.note':'*Approximate number of streams needed to cover the budget with no other revenue and at the selected rate per stream. Actual payouts vary by platform, territory, stream type, distributor and rights.',
+   'sim.detail':'{s} streams × {r} € + {o} other revenue',
+   'rate.1':'€0.001 · lower estimate','rate.2':'€0.002','rate.3':'€0.003 · example','rate.4':'€0.004 · higher estimate','rate.5':'€0.005',
+   'model.label':'Split','model.title':'Recoupment model','model.desc':'Adjust how net revenue is split after recoupment.',
+   'ms1.h':'Label recoupment','ms1.p':'Agreed eligible costs are repaid from the project’s defined revenue.',
+   'ms2.h':'Revenue split','ms2.p':'After recoupment, remaining net revenue is shared according to the agreed percentages.',
+   'ms3.h':'Transparent accounting','ms3.p':'Agree on reporting, payment deadlines and which items can be deducted.',
+   'model.labelShare':'Label share after recoupment (%)','model.artistShare':'Artist share after recoupment (%)','model.labelAmt':'Label — share of remaining revenue','model.artistAmt':'Artist — share of remaining revenue',
+   'share.ok':'Shares add up to 100%. ','share.warn':'Warning: shares currently add up to {n}%, but should total 100%. ',
+   'share.note':'Share amounts are shown only on revenue above the planned investment and before any other contractual deductions. This calculator is a planning tool, not a substitute for a contract or accounting advice.',
+   'per.track':'{v} per track','footer':'Data is stored locally in this browser.','toast.saved':'Project saved in this browser.',
+   'alert.save':'The browser blocked saving. Export a CSV as a backup.',
+   'csv.title':'Dvaes Digital — Investment calculator','csv.project':'Project','csv.tracks':'Number of tracks','csv.release':'Planned release','csv.cat':'Category','csv.amount':'Amount EUR','csv.total':'Total budget','csv.streams':'Streams','csv.rate':'Assumed revenue per stream','csv.other':'Other revenue EUR','csv.revenue':'Estimated revenue EUR','csv.labelShare':'Label share %','csv.artistShare':'Artist share %','csv.phase':'Phase'
+  }
+ };
+ const LANG_KEY='dvaesLabelDeskLang', STORAGE_KEY='labelDeskAlbumPlanner_v1';
+ let lang='hr';
+ const LOCALES={hr:'hr-HR',en:'en-GB'};
+ const t=(k,v)=>{let s=(T[lang][k]??T.hr[k]??k);if(v)for(const p in v)s=s.replace('{'+p+'}',v[p]);return s};
+
+ const $ = s => document.querySelector(s);
+ const $$ = s => [...document.querySelectorAll(s)];
+ const loc=()=>LOCALES[lang];
+ const fmt = n => (Number.isFinite(n)?n:0).toLocaleString(loc(),{style:'currency',currency:'EUR',maximumFractionDigits:2});
+ const nf = (n,o) => n.toLocaleString(loc(),o);
+ const num = el => Math.max(0, Number(el.value) || 0);
+ const budgetInputs = $$('.budget-input'), phaseInputs = $$('.phase-input');
+ const budget = () => budgetInputs.reduce((sum,el)=>sum+num(el),0);
+
+ function current(){
+  return {artist:$('#artist').value,trackCount:$('#trackCount').value,releaseDate:$('#releaseDate').value,
+   costs:budgetInputs.map(x=>num(x)),phases:phaseInputs.map(x=>num(x)),rate:$('#rate').value,otherRevenue:$('#otherRevenue').value,streams:$('#streams').value,labelShare:$('#labelShare').value,artistShare:$('#artistShare').value};
+ }
+
+ function render(){
+  const total=budget(), tracks=Math.max(1,num($('#trackCount'))), streams=num($('#streams')), rate=num($('#rate')), other=num($('#otherRevenue')), revenue=streams*rate+other, recovery=total>0?Math.min(100,revenue/total*100):100, remaining=Math.max(0,total-revenue);
+  $('#mBudget').textContent=fmt(total);$('#budgetTotal').textContent=fmt(total);$('#mRevenue').textContent=fmt(revenue);
+  $('#mRoi').textContent=nf(total>0?revenue/total*100:0,{maximumFractionDigits:1})+'%';
+  $('#mRemaining').textContent=fmt(remaining);$('#perTrack').textContent=t('per.track',{v:fmt(total/tracks)});
+  $$('.budget-row').forEach(row=>{const amount=num(row.querySelector('input'));row.querySelector('.budget-bar span').style.width=(total?Math.min(100,amount/total*100):0)+'%';});
+  $('#streamsLabel').textContent=nf(streams);$('#streamsMax').textContent=nf(5000000);
+  $('#simRevenue').textContent=fmt(revenue);$('#simRemaining').textContent=fmt(remaining);$('#recoveryBar').style.width=recovery+'%';
+  $('#recoveryLabel').textContent=nf(recovery,{maximumFractionDigits:1})+'%';
+  $('#simDetail').textContent=t('sim.detail',{s:nf(streams),r:nf(rate,{maximumFractionDigits:3}),o:fmt(other)});
+  $('#breakEven').textContent=rate>0?nf(Math.ceil(total/rate)):'—';
+  const phaseTotal=phaseInputs.reduce((s,e)=>s+num(e),0), okPhase=Math.abs(phaseTotal-total)<.01;
+  $('#phaseTotal').textContent=fmt(phaseTotal);
+  $('#phaseStatus').textContent=okPhase?t('phase.ok'):t('phase.diff',{d:fmt(phaseTotal-total)});
+  $('#phaseStatus').style.color=okPhase?'var(--ok)':'var(--bad)';
+  const ls=Math.min(100,num($('#labelShare'))),as=Math.min(100,num($('#artistShare'))),pool=Math.max(0,revenue-total);
+  $('#labelAmount').textContent=fmt(pool*ls/100);$('#artistAmount').textContent=fmt(pool*as/100);
+  $('#shareWarning').textContent=(ls+as===100?t('share.ok'):t('share.warn',{n:ls+as}))+t('share.note');
+ }
+
+ /* ---- language ---- */
+ function applyLang(l,persist=true){
+  const prev=lang; lang=T[l]?l:'hr';
+  document.documentElement.lang=lang;
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
+  $$('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',t(el.dataset.i18nAria)));
+  $('#footerNote').textContent=t('footer');
+  document.title='Dvaes Digital — '+(lang==='hr'?'Kalkulator ulaganja u album':'Album Investment Calculator');
+  // zamijeni zadani naziv projekta samo ako ga korisnik nije mijenjao
+  const a=$('#artist'); if(a.value===T.hr['artist.default']||a.value===T.en['artist.default']) a.value=t('artist.default');
+  $$('.lang-switch__btn').forEach(b=>{const on=b.dataset.lang===lang;b.classList.toggle('is-active',on);b.setAttribute('aria-pressed',on)});
+  if(persist){try{localStorage.setItem(LANG_KEY,lang)}catch(e){}}
+  render();
+ }
+
+ /* ---- storage ---- */
+ function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.id);toast.id=setTimeout(()=>el.classList.remove('show'),2100)}
+ function save(show=true){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(current()));if(show)toast(t('toast.saved'))}catch(e){alert(t('alert.save'))}}
+ function load(){try{const d=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!d)return;$('#artist').value=d.artist??$('#artist').value;$('#trackCount').value=d.trackCount??14;$('#releaseDate').value=d.releaseDate??'';budgetInputs.forEach((x,i)=>{if(d.costs?.[i]!==undefined)x.value=d.costs[i]});phaseInputs.forEach((x,i)=>{if(d.phases?.[i]!==undefined)x.value=d.phases[i]});$('#rate').value=d.rate??'0.003';$('#otherRevenue').value=d.otherRevenue??0;$('#streams').value=d.streams??500000;$('#labelShare').value=d.labelShare??50;$('#artistShare').value=d.artistShare??50}catch(e){}}
+
+ function exportCSV(){
+  const rows=[[t('csv.title')],[t('csv.project'),$('#artist').value],[t('csv.tracks'),$('#trackCount').value],[t('csv.release'),$('#releaseDate').value],[],
+   [t('csv.cat'),t('csv.amount')],...$$('.budget-row').map(r=>[r.querySelector('.budget-name').textContent,num(r.querySelector('input'))]),[t('csv.total'),budget()],[],
+   [t('csv.streams'),num($('#streams'))],[t('csv.rate'),num($('#rate'))],[t('csv.other'),num($('#otherRevenue'))],[t('csv.revenue'),num($('#streams'))*num($('#rate'))+num($('#otherRevenue'))],[t('csv.labelShare'),num($('#labelShare'))],[t('csv.artistShare'),num($('#artistShare'))],[],
+   [t('csv.phase'),t('csv.amount')],...$$('.phase').map(p=>[p.querySelector('h3').textContent,num(p.querySelector('input'))])];
+  const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='dvaes-label-desk-budget.csv';a.click();URL.revokeObjectURL(a.href);
+ }
+
+ /* ---- events ---- */
+ [...budgetInputs,...phaseInputs,$('#artist'),$('#trackCount'),$('#releaseDate'),$('#rate'),$('#otherRevenue'),$('#streams'),$('#labelShare'),$('#artistShare')].forEach(el=>el.addEventListener('input',render));
+ $('#saveBtn').addEventListener('click',()=>save(true));$('#exportBtn').addEventListener('click',exportCSV);$('#printBtn').addEventListener('click',()=>window.print());
+ $$('.lang-switch__btn').forEach(b=>b.addEventListener('click',()=>applyLang(b.dataset.lang)));
+
+ const header=$('#siteHeader'), toggle=$('#navToggle');
+ toggle.addEventListener('click',()=>{const o=header.classList.toggle('is-open');toggle.setAttribute('aria-expanded',o)});
+ $$('.site-nav a').forEach(a=>a.addEventListener('click',()=>{header.classList.remove('is-open');toggle.setAttribute('aria-expanded',false)}));
+
+ // scroll-spy za aktivnu stavku izbornika
+ const links=$$('.site-nav a'), map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+ const spy=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.removeAttribute('aria-current'));map.get(e.target.id)?.setAttribute('aria-current','true')}})},{rootMargin:'-30% 0px -60% 0px'});
+ map.forEach((_,id)=>{const el=document.getElementById(id);if(el)spy.observe(el)});
+
+ /* ---- init ---- */
+ let startLang; try{startLang=localStorage.getItem(LANG_KEY)}catch(e){}
+ if(!T[startLang]) startLang=(navigator.language||'').toLowerCase().startsWith('hr')?'hr':'en';
+ load(); applyLang(startLang,false);
+})();
+</script>
+</body>
+</html>

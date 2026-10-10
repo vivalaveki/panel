@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prijava</title>
+<style>
+  :root { --bg:#eef1f4; --card:#fff; --text:#1c2430; --muted:#5d6b7a; --accent:#1f5f8b; --err:#b3261e; --line:#c9d2db; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12171d; --card:#1b222b; --text:#e6ebf0; --muted:#93a1b0; --accent:#5aa9dd; --err:#ff8a80; --line:#324050; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height:100%; margin:0; }
+  body { display:grid; place-items:center; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding:16px; }
+  main { width:100%; max-width:360px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:28px; }
+  h1 { font-size:1.4rem; margin:0 0 20px; }
+  label { display:block; font-size:.9rem; color:var(--muted); margin:14px 0 6px; }
+  input { width:100%; padding:10px 12px; font:inherit; color:var(--text); background:transparent; border:1px solid var(--line); border-radius:6px; }
+  input:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  button { width:100%; margin-top:22px; padding:11px; font:inherit; font-weight:600; color:#fff; background:var(--accent); border:0; border-radius:6px; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  #err { min-height:1.3em; margin:14px 0 0; font-size:.9rem; color:var(--err); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Prijava</h1>
+  <div id="form" role="group" aria-label="Prijava">
+    <label for="u">Korisničko ime</label>
+    <input id="u" autocomplete="username" autofocus>
+    <label for="p">Lozinka</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <button id="btn" type="button">Prijavi se</button>
+    <p id="err" role="alert"></p>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Čita credentials.txt; svaki red: username: [ime], password: [lozinka]
+// (zagrade su opcionalne, može više redova = više korisnika)
+function parseCredentials(text) {
+  const re = /username:\s*\[?(.*?)\]?\s*,\s*password:\s*\[?(.*?)\]?\s*$/i;
+  return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    .map(l => l.match(re)).filter(Boolean)
+    .map(m => ({ user: m[1], pass: m[2] }));
+}
+
+async function login() {
+  const user = $('u').value.trim(), pass = $('p').value;
+  const err = $('err'), btn = $('btn');
+  err.textContent = '';
+  if (!user || !pass) { err.textContent = 'Unesi korisničko ime i lozinku.'; return; }
+  btn.disabled = true;
+  try {
+    const r = await fetch('credentials.txt', { cache: 'no-store' });
+    if (!r.ok) throw new Error('credentials.txt nije dostupan');
+    const ok = parseCredentials(await r.text()).some(c => c.user === user && c.pass === pass);
+    if (!ok) { err.textContent = 'Pogrešno korisničko ime ili lozinka.'; btn.disabled = false; return; }
+
+    // Uspjeh: tek sad dohvati panel.html i zamijeni stranicu bez redirecta
+    const pr = await fetch('panel.html', { cache: 'no-store' });
+    if (!pr.ok) throw new Error('panel.html nije dostupan');
+    const html = await pr.text();
+    document.open(); document.write(html); document.close();
+  } catch (e) {
+    err.textContent = 'Greška: ' + e.message + '. Stranicu otvori preko web servera, ne direktno iz fajla.';
+    btn.disabled = false;
+  }
+}
+
+$('btn').addEventListener('click', login);
+['u', 'p'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+</script>
+</body>
+</html>
